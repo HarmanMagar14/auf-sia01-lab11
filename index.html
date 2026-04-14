@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍿 Movie Search</h1>
+            <p>Search through thousands of movies</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-input-wrapper">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search for a movie..." 
+                    autocomplete="off"
+                >
+                <button type="button" onclick="search()">Search</button>
+            </div>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="genreFilter">Genre:</label>
+                    <select id="genreFilter" onchange="search()">
+                        <option value="">All Genres</option>
+                        <option value="Action">Action</option>
+                        <option value="Comedy">Comedy</option>
+                        <option value="Drama">Drama</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="Animation">Animation</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Fantasy">Fantasy</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="yearFilter">Year Released:</label>
+                    <select id="yearFilter" onchange="search()">
+                        <option value="">All Years</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="2020">2020</option>
+                        <option value="2010-2019">2010 - 2019</option>
+                        <option value="2000-2009">2000 - 2009</option>
+                        <option value="1990-1999">1990 - 1999</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsContainer">
+            <div class="no-results">Start searching to find movies</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'search.php';
+        let currentPage = 0;
+        let currentQuery = '';
+
+        async function search(page = 0) {
+            const query = document.getElementById('searchInput').value.trim();
+            const genre = document.getElementById('genreFilter').value;
+            const year = document.getElementById('yearFilter').value;
+
+            // Allow search if there's either a query OR filters (year/genre)
+            if (!query && !genre && !year) {
+                document.getElementById('resultsContainer').innerHTML = 
+                    '<div class="no-results">Enter a search query or select filters</div>';
+                return;
+            }
+
+            currentQuery = query;
+            currentPage = page;
+
+            // Build filters
+            let filters = [];
+            if (genre) {
+                filters.push(`genre:"${genre}"`);
+            }
+            if (year) {
+                // Convert year to timestamp filter
+                if (year.includes('-')) {
+                    // Range filters like "2010-2019"
+                    const [startYear, endYear] = year.split('-').map(Number);
+                    const startTimestamp = new Date(startYear, 0, 1).getTime() / 1000;
+                    const endTimestamp = new Date(endYear, 11, 31, 23, 59, 59).getTime() / 1000;
+                    filters.push(`release_timestamp >= ${startTimestamp} AND release_timestamp <= ${endTimestamp}`);
+                } else {
+                    // Single year like "2024"
+                    const yearNum = parseInt(year);
+                    const startTimestamp = new Date(yearNum, 0, 1).getTime() / 1000;
+                    const endTimestamp = new Date(yearNum, 11, 31, 23, 59, 59).getTime() / 1000;
+                    filters.push(`release_timestamp >= ${startTimestamp} AND release_timestamp <= ${endTimestamp}`);
+                }
+            }
+
+            showLoading();
+
+            try {
+                const params = new URLSearchParams({
+                    q: query,
+                    page: page,
+                    limit: 20,
+                    ...(filters.length && { filters: filters.join(' AND ') })
+                });
+
+                const response = await fetch(`${API_URL}?${params}`);
+                
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    showError(data.error || 'Search failed');
+                    return;
+                }
+
+                displayResults(data);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function displayResults(data) {
+            const container = document.getElementById('resultsContainer');
+
+            if (!data.hits || data.hits.length === 0) {
+                container.innerHTML = '<div class="no-results">No movies found</div>';
+                return;
+            }
+
+            let html = `<div class="results-info">Found ${data.nbHits} movie${data.nbHits !== 1 ? 's' : ''}</div>`;
+            html += '<div class="results-grid">';
+
+            data.hits.forEach(movie => {
+                const poster = movie.poster_url 
+                    ? `<img src="${movie.poster_url}" alt="${movie.title}">` 
+                    : '<div class="poster-placeholder">🎬</div>';
+
+                const genres = movie.genre 
+                    ? (Array.isArray(movie.genre) 
+                        ? movie.genre.join(', ') 
+                        : movie.genre).split(',').slice(0, 2).map(g => 
+                            `<span class="genre-tag">${g.trim()}</span>`
+                        ).join('') 
+                    : '';
+
+                const year = movie.release_date 
+                    ? new Date(movie.release_date).getFullYear() 
+                    : 'N/A';
+
+                const rating = movie.vote_average 
+                    ? movie.vote_average.toFixed(1) 
+                    : 'N/A';
+
+                html += `
+                    <div class="movie-card">
+                        <div class="movie-poster">${poster}</div>
+                        <div class="movie-info">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-meta">
+                                <span class="movie-rating">⭐ ${rating}</span>
+                                <span class="movie-year">${year}</span>
+                            </div>
+                            ${genres ? `<div class="movie-genre">${genres}</div>` : ''}
+                            ${movie.overview ? `<div class="movie-overview">${movie.overview}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            // Add pagination
+            if (data.nbPages > 1) {
+                html += '<div class="pagination">';
+                
+                if (data.page > 0) {
+                    html += `<button onclick="search(${data.page - 1})">← Previous</button>`;
+                }
+
+                // Show page numbers
+                const start = Math.max(0, data.page - 2);
+                const end = Math.min(data.nbPages, data.page + 3);
+
+                if (start > 0) {
+                    html += `<button onclick="search(0)">1</button>`;
+                    if (start > 1) html += '<span style="color:white;">...</span>';
+                }
+
+                for (let i = start; i < end; i++) {
+                    const active = i === data.page ? ' active' : '';
+                    html += `<button onclick="search(${i})" class="page-num${active}">${i + 1}</button>`;
+                }
+
+                if (end < data.nbPages) {
+                    if (end < data.nbPages - 1) html += '<span style="color:white;">...</span>';
+                    html += `<button onclick="search(${data.nbPages - 1})">${data.nbPages}</button>`;
+                }
+
+                if (data.page < data.nbPages - 1) {
+                    html += `<button onclick="search(${data.page + 1})">Next →</button>`;
+                }
+
+                html += '</div>';
+                html += `<div class="page-info">Page ${data.page + 1} of ${data.nbPages}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function showLoading() {
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Searching...</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="error">❌ ${message}</div>
+            `;
+        }
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+    </script>
+</body>
+</html>

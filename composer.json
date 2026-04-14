@@ -1,0 +1,15 @@
+{
+    "name": "movie-search/sync",
+    "description": "Movie database synchronization script for Algolia search",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "algolia/algoliasearch-client-php": "^3.0",
+        "vlucas/phpdotenv": "^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "MovieSync\\": "src/"
+        }
+    }
+}
