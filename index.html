@@ -64,15 +64,11 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch.umd.js"></script>
     <script>
         // Algolia Configuration
         const ALGOLIA_APP_ID = 'MGJ3CMU153';
         const ALGOLIA_SEARCH_KEY = '5a24e8a7d196c7d9a5ec38c917e2acb0';
         const ALGOLIA_INDEX = 'movies';
-
-        const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_SEARCH_KEY);
-        const index = client.initIndex(ALGOLIA_INDEX);
 
         let currentPage = 0;
         let currentQuery = '';
@@ -117,17 +113,38 @@
             showLoading();
 
             try {
-                const searchParams = {
-                    query: query,
-                    page: page,
-                    hitsPerPage: 20
+                const requestBody = {
+                    requests: [{
+                        indexName: ALGOLIA_INDEX,
+                        query: query,
+                        page: page,
+                        hitsPerPage: 20
+                    }]
                 };
 
                 if (filters.length > 0) {
-                    searchParams.filters = filters.join(' AND ');
+                    requestBody.requests[0].filters = filters.join(' AND ');
                 }
 
-                const results = await index.search(query, searchParams);
+                const response = await fetch(
+                    `https://${ALGOLIA_APP_ID}-1.algolianet.com/1/indexes/*/queries`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'X-Algolia-API-Key': ALGOLIA_SEARCH_KEY,
+                            'X-Algolia-Application-Id': ALGOLIA_APP_ID,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const data = await response.json();
+                const results = data.results[0];
                 
                 displayResults(results);
             } catch (error) {
