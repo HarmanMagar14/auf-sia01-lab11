@@ -1,9 +1,0 @@
-vendor/
-composer.lock
-node_modules/
-.DS_Store
-*.log
-debug.php
-test-*.php
-.env.local
-.env
