@@ -17,14 +17,20 @@ composer install
 ```
 
 ### 2. Configure Environment
-Update `.env` with your credentials:
+Copy `.env.example` to `.env` and update with your credentials:
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your actual credentials:
 ```env
 DB_HOST=localhost
-DB_NAME=movies_db
+DB_NAME=moviedb
 DB_USER=root
-DB_PASS=secret
+DB_PASS=your_password
 ALGOLIA_APP_ID=your_app_id
 ALGOLIA_ADMIN_KEY=your_admin_key
+ALGOLIA_SEARCH_KEY=your_search_key
 ALGOLIA_INDEX=movies
 ```
 
