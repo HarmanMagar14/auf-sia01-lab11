@@ -1,19 +1,20 @@
 <?php
 require_once 'vendor/autoload.php';
 
-use Dotenv\Dotenv;
+// Configuration values
+$config = [
+    'ALGOLIA_APP_ID' => 'MGJ3CMU153',
+    'ALGOLIA_SEARCH_KEY' => '5a24e8a7d196c7d9a5ec38c917e2acb0',
+    'ALGOLIA_ADMIN_KEY' => '',
+    'ALGOLIA_INDEX' => 'movies',
+    'DB_HOST' => 'localhost',
+    'DB_NAME' => 'moviedb',
+    'DB_USER' => 'root',
+    'DB_PASS' => '',
+];
 
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-echo "Checking with different methods:\n\n";
-echo "getenv('ALGOLIA_APP_ID'): " . var_export(getenv('ALGOLIA_APP_ID'), true) . "\n";
-echo "getenv('DB_NAME'): " . var_export(getenv('DB_NAME'), true) . "\n";
-echo "\$_ENV['ALGOLIA_APP_ID']: " . var_export($_ENV['ALGOLIA_APP_ID'] ?? 'NOT SET', true) . "\n";
-echo "\$_ENV['DB_NAME']: " . var_export($_ENV['DB_NAME'] ?? 'NOT SET', true) . "\n";
-
-echo "\n.env file exists: " . (file_exists('.env') ? 'YES' : 'NO') . "\n";
-echo ".env path: " . realpath('.env') . "\n";
-echo ".env contents:\n";
-echo file_get_contents('.env');
+echo "Configuration values:\n\n";
+foreach ($config as $key => $value) {
+    echo "$key: " . var_export($value, true) . "\n";
+}
 

@@ -7,13 +7,6 @@
 require_once 'vendor/autoload.php';
 
 use Algolia\AlgoliaSearch\SearchClient;
-use Dotenv\Dotenv;
-
-// ─────────────────────────────────────────
-// Load Environment Variables
-// ─────────────────────────────────────────
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -28,9 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ─────────────────────────────────────────
 // Configuration
 // ─────────────────────────────────────────
-define('ALGOLIA_APP_ID',     $_ENV['ALGOLIA_APP_ID']    ?? 'YOUR_APP_ID');
-define('ALGOLIA_SEARCH_KEY', $_ENV['ALGOLIA_SEARCH_KEY'] ?? $_ENV['ALGOLIA_ADMIN_KEY'] ?? 'YOUR_SEARCH_KEY');
-define('ALGOLIA_INDEX',      $_ENV['ALGOLIA_INDEX']      ?? 'movies');
+define('ALGOLIA_APP_ID',     'MGJ3CMU153');
+define('ALGOLIA_SEARCH_KEY', '5a24e8a7d196c7d9a5ec38c917e2acb0');
+define('ALGOLIA_INDEX',      'movies');
 
 // ─────────────────────────────────────────
 // Get Search Parameters
