@@ -64,8 +64,16 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch.umd.js"></script>
     <script>
-        const API_URL = 'search.php';
+        // Algolia Configuration
+        const ALGOLIA_APP_ID = 'MGJ3CMU153';
+        const ALGOLIA_SEARCH_KEY = '5a24e8a7d196c7d9a5ec38c917e2acb0';
+        const ALGOLIA_INDEX = 'movies';
+
+        const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_SEARCH_KEY);
+        const index = client.initIndex(ALGOLIA_INDEX);
+
         let currentPage = 0;
         let currentQuery = '';
 
@@ -109,29 +117,21 @@
             showLoading();
 
             try {
-                const params = new URLSearchParams({
-                    q: query,
+                const searchParams = {
+                    query: query,
                     page: page,
-                    limit: 20,
-                    ...(filters.length && { filters: filters.join(' AND ') })
-                });
+                    hitsPerPage: 20
+                };
 
-                const response = await fetch(`${API_URL}?${params}`);
+                if (filters.length > 0) {
+                    searchParams.filters = filters.join(' AND ');
+                }
+
+                const results = await index.search(query, searchParams);
                 
-                if (!response.ok) {
-                    throw new Error('Search failed');
-                }
-
-                const data = await response.json();
-
-                if (!data.success) {
-                    showError(data.error || 'Search failed');
-                    return;
-                }
-
-                displayResults(data);
+                displayResults(results);
             } catch (error) {
-                showError(error.message);
+                showError(error.message || 'Search failed');
             }
         }
 
